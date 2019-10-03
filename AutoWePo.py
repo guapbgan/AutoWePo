@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[4]:
+# In[14]:
 
 
 import pandas as pd
@@ -11,18 +11,29 @@ import os
 from tabulate import tabulate
 
 
-# In[5]:
+# In[15]:
 
 
 def _readReport():
     global GlobalVar
-    GlobalVar.reportDf = pd.read_excel("WeeklyReport-V1.0-2019.09.30-TonyOu.xlsx", header = 0)
-    
+    GlobalVar.reportDf = pd.read_excel(GlobalVar.fileName, header = 0)
     #replace datetime to only date 
     for dateColumn in GlobalVar.dateMetadata:
         GlobalVar.reportDf[dateColumn] = GlobalVar.reportDf[dateColumn].dt.date
-    
+    #replace nan to empty string
     GlobalVar.reportDf = GlobalVar.reportDf.replace(np.nan, "")
+    _reorder()
+    
+def _reorder():
+    global GlobalVar
+    checkPart = GlobalVar.reportDf.loc[GlobalVar.reportDf['SKILL'] == "Check"].sort_values(by=["AP"])
+    complementaryPart = GlobalVar.reportDf.loc[GlobalVar.reportDf['SKILL'] != "Check"].sort_values(by=["OA_NO", "AP", "OA_DESC", "SKILL"])
+    if checkPart.size > 0:
+        GlobalVar.reportDf = pd.concat([checkPart, complementaryPart]).reset_index()
+    else:
+        GlobalVar.reportDf = complementaryPart.reset_index()
+#         complementaryPart = GlobalVar.reportDf.loc[GlobalVar.reportDf['SKILL'] != "Check"]
+#         complementaryPart = complementaryPart.sort_values(by=["OA_NO", "AP", "SKILL"])
     
 
 def _showBrief():
@@ -52,6 +63,7 @@ def addNewRow():
         else:
             newDataDict[key] = ""
     GlobalVar.reportDf = GlobalVar.reportDf.append(newDataDict, ignore_index=True)
+    _reorder()
     _showBrief()
     
 def _controller():
@@ -79,10 +91,12 @@ class GlobalVar():
     dateMetadata = ['DUE_DATE', 'COMPLET_D']
     displayColumns = [2, 12, 13]
     functionDict = {"new": addNewRow, "all": displayAll, "save": saveExcel}
-    fileName = "WeeklyReport-V1.0-2019.09.30-TonyOu.xlsx"
+#     fileName = "WeeklyReport-V1.0-2019.09.30-TonyOu.xlsx"
+    fileName = "new.xlsx"
+    
 
 
-# In[6]:
+# In[16]:
 
 
 initializeApp()
