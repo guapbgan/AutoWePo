@@ -1,23 +1,29 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[27]:
+# In[4]:
 
 
 import pandas as pd
+import numpy as np
 import sys
 import os
 from tabulate import tabulate
 
 
-# In[31]:
+# In[5]:
 
 
 def _readReport():
     global GlobalVar
     GlobalVar.reportDf = pd.read_excel("WeeklyReport-V1.0-2019.09.30-TonyOu.xlsx", header = 0)
+    
+    #replace datetime to only date 
     for dateColumn in GlobalVar.dateMetadata:
         GlobalVar.reportDf[dateColumn] = GlobalVar.reportDf[dateColumn].dt.date
+    
+    GlobalVar.reportDf = GlobalVar.reportDf.replace(np.nan, "")
+    
 
 def _showBrief():
     global GlobalVar
@@ -76,7 +82,7 @@ class GlobalVar():
     fileName = "WeeklyReport-V1.0-2019.09.30-TonyOu.xlsx"
 
 
-# In[ ]:
+# In[6]:
 
 
 initializeApp()
