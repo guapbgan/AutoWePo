@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[14]:
+# In[70]:
 
 
 import pandas as pd
@@ -11,7 +11,7 @@ import os
 from tabulate import tabulate
 
 
-# In[15]:
+# In[96]:
 
 
 def _readReport():
@@ -47,9 +47,40 @@ def _saveXlsx():
     global GlobalVar
     GlobalVar.reportDf.to_excel(GlobalVar.fileName, index = False)
     
-def saveExcel():
-    _saveXlsx()
+def _controller():
+    global GlobalVar
+    showFlag = True
+    action = None
+    _showBrief()
+    while(True):
+        action = input("To do? ").lower().strip()
+        if action in GlobalVar.functionDict:
+#             try:
+                GlobalVar.functionDict[action]()
+#             except:
+#                 print("Unexpected error:", sys.exc_info()[0])
+        else:
+            print("Unknow function")
+            
+def initializeApp():
+    _readReport()
+    _controller()
+
+class GlobalVar():
+    reportDf = None
+    metadata =  ['A_DATE', 'ITEM', 'OA_DESC', 'AP', 'SKILL', 'SITE', 'DUE_DATE', 'COMPLET_D', 'OWNER', 'IT_STATUS', 'OA_NO', 'PROGRAM', 'W_HOUR', 'REMARK', 'PROG_CNT', 'OA_STATUS']
+    constMetadata = ['A_DATE', 'ITEM', 'OWNER']
+    dateMetadata = ['DUE_DATE', 'COMPLET_D']
+    displayColumns = [2, 12, 13]
+    functionDict = {"new": addNewRow, "all": displayAll, "save": saveExcel, "edit": editRow, "exit": exitApp}
+#     fileName = "WeeklyReport-V1.0-2019.09.30-TonyOu.xlsx"
+    fileName = "new.xlsx"
     
+
+
+# In[95]:
+
+
 def displayAll():
     global GlobalVar
     print(tabulate(GlobalVar.reportDf, headers='keys', tablefmt='psql'))
@@ -65,38 +96,42 @@ def addNewRow():
     GlobalVar.reportDf = GlobalVar.reportDf.append(newDataDict, ignore_index=True)
     _reorder()
     _showBrief()
-    
-def _controller():
+
+def saveExcel():
+    _saveXlsx()
+
+def exitApp():
+    sys.exit()
+
+def editRow():
+    def showToEdit(metadata):
+        print(GlobalVar.reportDf.iloc[int(index)][metadataPair[index]])
+        
     global GlobalVar
-    showFlag = True
-    action = None
-    _showBrief()
+    index = input("Which row?")
+    count = 0
+    metadataPair = {"all": "all"}
+    for column in GlobalVar.metadata:
+        if column not in GlobalVar.constMetadata:
+            count += 1
+            print(f"{count}.{column}", end = "｜")
+            metadataPair[str(count)] = column
     while(True):
-        action = input("To do? ").lower().strip()
-        if action in GlobalVar.functionDict:
-            try:
-                GlobalVar.functionDict[action]()
-            except:
-                print("Unexpected error:", sys.exc_info()[0])
+        editTarget = input("Which column? Or all?").lower().strip()
+        if editTarget in metadataPair:
+            break
         else:
-            print("Unknow function")
-def initializeApp():
-    _readReport()
-    _controller()
-
-class GlobalVar():
-    reportDf = None
-    metadata =  ['A_DATE', 'ITEM', 'OA_DESC', 'AP', 'SKILL', 'SITE', 'DUE_DATE', 'COMPLET_D', 'OWNER', 'IT_STATUS', 'OA_NO', 'PROGRAM', 'W_HOUR', 'REMARK', 'PROG_CNT', 'OA_STATUS']
-    constMetadata = ['A_DATE', 'ITEM']
-    dateMetadata = ['DUE_DATE', 'COMPLET_D']
-    displayColumns = [2, 12, 13]
-    functionDict = {"new": addNewRow, "all": displayAll, "save": saveExcel}
-#     fileName = "WeeklyReport-V1.0-2019.09.30-TonyOu.xlsx"
-    fileName = "new.xlsx"
-    
+            print("Not correct. Try again.")
+    if editTarget != "all":
+        GlobalVar.reportDf.at[int(index), metadataPair[index]] = input(f"{GlobalVar.reportDf.iloc[int(index)][metadataPair[index]]} ->")
+    else:
+        for metadata in GlobalVar.metadata:
+            if metadata not in GlobalVar.constMetadata:
+                GlobalVar.reportDf.at[int(index), metadata] = input(f"{metadata}:{GlobalVar.reportDf.iloc[int(index)][metadata]} ->")
+    _showBrief()
 
 
-# In[16]:
+# In[97]:
 
 
 initializeApp()
