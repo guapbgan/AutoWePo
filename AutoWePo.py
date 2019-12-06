@@ -1,17 +1,16 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[70]:
+# In[12]:
 
 
 import pandas as pd
 import numpy as np
-import sys
 import os
 from tabulate import tabulate
 
 
-# In[96]:
+# In[25]:
 
 
 def _readReport():
@@ -59,27 +58,14 @@ def _controller():
                 GlobalVar.functionDict[action]()
 #             except:
 #                 print("Unexpected error:", sys.exc_info()[0])
+        elif action == "?":
+            for key in GlobalVar.functionDict:
+                print(key)
+        elif action == "ex":
+            break
         else:
             print("Unknow function")
             
-def initializeApp():
-    _readReport()
-    _controller()
-
-class GlobalVar():
-    reportDf = None
-    metadata =  ['A_DATE', 'ITEM', 'OA_DESC', 'AP', 'SKILL', 'SITE', 'DUE_DATE', 'COMPLET_D', 'OWNER', 'IT_STATUS', 'OA_NO', 'PROGRAM', 'W_HOUR', 'REMARK', 'PROG_CNT', 'OA_STATUS']
-    constMetadata = ['A_DATE', 'ITEM', 'OWNER']
-    dateMetadata = ['DUE_DATE', 'COMPLET_D']
-    displayColumns = [2, 12, 13]
-    functionDict = {"new": addNewRow, "all": displayAll, "save": saveExcel, "edit": editRow, "exit": exitApp}
-#     fileName = "WeeklyReport-V1.0-2019.09.30-TonyOu.xlsx"
-    fileName = "new.xlsx"
-    
-
-
-# In[95]:
-
 
 def displayAll():
     global GlobalVar
@@ -100,13 +86,7 @@ def addNewRow():
 def saveExcel():
     _saveXlsx()
 
-def exitApp():
-    sys.exit()
-
 def editRow():
-    def showToEdit(metadata):
-        print(GlobalVar.reportDf.iloc[int(index)][metadataPair[index]])
-        
     global GlobalVar
     index = input("Which row?")
     count = 0
@@ -116,6 +96,7 @@ def editRow():
             count += 1
             print(f"{count}.{column}", end = "｜")
             metadataPair[str(count)] = column
+    
     while(True):
         editTarget = input("Which column? Or all?").lower().strip()
         if editTarget in metadataPair:
@@ -123,15 +104,29 @@ def editRow():
         else:
             print("Not correct. Try again.")
     if editTarget != "all":
-        GlobalVar.reportDf.at[int(index), metadataPair[index]] = input(f"{GlobalVar.reportDf.iloc[int(index)][metadataPair[index]]} ->")
+        GlobalVar.reportDf.at[int(index), metadataPair[editTarget]] = input(f"{GlobalVar.reportDf.at[int(index), metadataPair[editTarget]]} ->")
     else:
         for metadata in GlobalVar.metadata:
             if metadata not in GlobalVar.constMetadata:
                 GlobalVar.reportDf.at[int(index), metadata] = input(f"{metadata}:{GlobalVar.reportDf.iloc[int(index)][metadata]} ->")
     _showBrief()
 
+class GlobalVar():
+    reportDf = None
+    metadata =  ['A_DATE', 'ITEM', 'OA_DESC', 'AP', 'SKILL', 'SITE', 'DUE_DATE', 'COMPLET_D', 'OWNER', 'IT_STATUS', 'OA_NO', 'PROGRAM', 'W_HOUR', 'REMARK', 'PROG_CNT', 'OA_STATUS']
+    constMetadata = ['A_DATE', 'ITEM', 'OWNER']
+    dateMetadata = ['DUE_DATE', 'COMPLET_D']
+    displayColumns = [2, 12, 13]
+    functionDict = {"new": addNewRow, "all": displayAll, "save": saveExcel, "edit": editRow}
+#     fileName = "WeeklyReport-V1.0-2019.09.30-TonyOu.xlsx"
+    fileName = "new.xlsx"
+    
+def initializeApp():
+    _readReport()
+    _controller()
 
-# In[97]:
+
+# In[26]:
 
 
 initializeApp()
