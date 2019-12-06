@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[12]:
+# In[1]:
 
 
 import pandas as pd
@@ -10,7 +10,7 @@ import os
 from tabulate import tabulate
 
 
-# In[25]:
+# In[2]:
 
 
 def _readReport():
@@ -19,6 +19,8 @@ def _readReport():
     #replace datetime to only date 
     for dateColumn in GlobalVar.dateMetadata:
         GlobalVar.reportDf[dateColumn] = GlobalVar.reportDf[dateColumn].dt.date
+    #set all cell dataType of dataframe to str
+    GlobalVar.reportDf = GlobalVar.reportDf.astype(str)
     #replace nan to empty string
     GlobalVar.reportDf = GlobalVar.reportDf.replace(np.nan, "")
     _reorder()
@@ -103,13 +105,25 @@ def editRow():
             break
         else:
             print("Not correct. Try again.")
+    
     if editTarget != "all":
         GlobalVar.reportDf.at[int(index), metadataPair[editTarget]] = input(f"{GlobalVar.reportDf.at[int(index), metadataPair[editTarget]]} ->")
     else:
         for metadata in GlobalVar.metadata:
             if metadata not in GlobalVar.constMetadata:
-                GlobalVar.reportDf.at[int(index), metadata] = input(f"{metadata}:{GlobalVar.reportDf.iloc[int(index)][metadata]} ->")
+                GlobalVar.reportDf.at[int(index), metadata] = input(f"{GlobalVar.reportDf.at[int(index), metadata]} ->")
+    _reorder()
     _showBrief()
+    
+def removeRow():
+    global GlobalVar
+    index = int(input("Which row?"))
+    if input(f"Confirm to delete {index} row? enter n to stop ") != "n":
+        GlobalVar.reportDf = GlobalVar.reportDf.drop(GlobalVar.reportDf.index[index])
+        _reorder()
+        _showBrief()
+    else:
+        print("canceled")
 
 class GlobalVar():
     reportDf = None
@@ -117,7 +131,7 @@ class GlobalVar():
     constMetadata = ['A_DATE', 'ITEM', 'OWNER']
     dateMetadata = ['DUE_DATE', 'COMPLET_D']
     displayColumns = [2, 12, 13]
-    functionDict = {"new": addNewRow, "all": displayAll, "save": saveExcel, "edit": editRow}
+    functionDict = {"new": addNewRow, "all": displayAll, "save": saveExcel, "edit": editRow, "remove": removeRow}
 #     fileName = "WeeklyReport-V1.0-2019.09.30-TonyOu.xlsx"
     fileName = "new.xlsx"
     
@@ -126,7 +140,7 @@ def initializeApp():
     _controller()
 
 
-# In[26]:
+# In[3]:
 
 
 initializeApp()
