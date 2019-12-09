@@ -1,3 +1,4 @@
 *.xlsx
 *.xls
 .ipynb_checkpoints
+person.config
