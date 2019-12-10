@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[11]:
+# In[1]:
 
 
 import pandas as pd
@@ -12,19 +12,12 @@ import datetime
 from tabulate import tabulate
 
 
-# In[18]:
+# In[9]:
 
 
 def _readReport():
     global GlobalVar
     GlobalVar.reportDf = pd.read_excel(GlobalVar.fileName, header = 0, dtype = str)
-#   mark to be deleted
-#     #replace datetime to only date 
-#     for dateColumn in GlobalVar.dateMetadata:
-#         GlobalVar.reportDf[dateColumn] = GlobalVar.reportDf[dateColumn].dt.date
-#     #set all cell dataType of dataframe to str
-#     GlobalVar.reportDf = GlobalVar.reportDf.astype(str)
-    #replace nan to empty string
     GlobalVar.reportDf = GlobalVar.reportDf.replace(np.nan, "")
     _reorder()
     
@@ -135,36 +128,7 @@ def removeRow():
     else:
         print("canceled")
 
-def _selfCheck():
-    global GlobalVar
-    if not os.path.isfile("person.config"):
-        firstExecute()
-    _readConfig()
-    
-    if GlobalVar.owner == None:
-        print("ERROR: do not get owner name")
-        return False
-    
-    if GlobalVar.fileName != None:
-        _readReport()
-    else:
-        GlobalVar.fileName = f"WeeklyReport-V1.0-{_getFirstDayOfWeek('.')}-{GlobalVar.owner}.xlsx"
-        pattern = re.compile(r"(?P<key>[a-zA-Z1-9]*)=(?P<value>.*)")
-        with open("person.config", "r+") as config:
-            pattern = re.compile(r"(?P<key>[a-zA-Z1-9]*)=(?P<value>.*)")
-            with open("person.config", "r+") as config:
-                lines = config.readlines()
-                for index, line in enumerate(lines):
-                    matcher = pattern.match(line.strip())
-                    if matcher:
-                        key = matcher.group("key")
-                        value = matcher.group("value")
-                        if key == "fileName":
-                            lines[index] = f"fileName={GlobalVar.fileName}\n"
-                config.seek(0)
-                config.writelines(lines)
-        _saveXlsx()
-    return True
+
 
 def firstExecute():
     global GlobalVar
@@ -202,6 +166,11 @@ def _readConfig():
         
     
 
+
+
+# In[6]:
+
+
 class GlobalVar():
     reportDf = None
     metadata =  ['A_DATE', 'ITEM', 'OA_DESC', 'AP', 'SKILL', 'SITE', 'DUE_DATE', 'COMPLET_D', 'OWNER', 'IT_STATUS', 'OA_NO', 'PROGRAM', 'W_HOUR', 'REMARK', 'PROG_CNT', 'OA_STATUS']
@@ -212,12 +181,43 @@ class GlobalVar():
     owner = None
     fileName = None
     
+def _selfCheck():
+    global GlobalVar
+    if not os.path.isfile("person.config"):
+        firstExecute()
+    _readConfig()
+    
+    if GlobalVar.owner == None:
+        print("ERROR: do not get owner name")
+        return False
+    
+    if GlobalVar.fileName != None:
+        _readReport()
+    else:
+        GlobalVar.fileName = f"WeeklyReport-V1.0-{_getFirstDayOfWeek('.')}-{GlobalVar.owner}.xlsx"
+        pattern = re.compile(r"(?P<key>[a-zA-Z1-9]*)=(?P<value>.*)")
+        with open("person.config", "r+") as config:
+            pattern = re.compile(r"(?P<key>[a-zA-Z1-9]*)=(?P<value>.*)")
+            with open("person.config", "r+") as config:
+                lines = config.readlines()
+                for index, line in enumerate(lines):
+                    matcher = pattern.match(line.strip())
+                    if matcher:
+                        key = matcher.group("key")
+                        value = matcher.group("value")
+                        if key == "fileName":
+                            lines[index] = f"fileName={GlobalVar.fileName}\n"
+                config.seek(0)
+                config.writelines(lines)
+        _saveXlsx()
+    return True
+
 def initializeApp():
     if(_selfCheck()):
         _controller()
 
 
-# In[21]:
+# In[8]:
 
 
 initializeApp()
