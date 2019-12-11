@@ -8,11 +8,14 @@ import pandas as pd
 import numpy as np
 import os
 import re
+import sys
 import datetime
+import brobot
+import getpass
 from tabulate import tabulate
 
 
-# In[9]:
+# In[2]:
 
 
 def _readReport():
@@ -47,25 +50,7 @@ def _saveXlsx():
     GlobalVar.reportDf["OWNER"] = GlobalVar.owner
     GlobalVar.reportDf.to_excel(GlobalVar.fileName, index = False)
     
-def _controller():
-    global GlobalVar
-    showFlag = True
-    action = None
-    _showBrief()
-    while(True):
-        action = input("To do? ").lower().strip()
-        if action in GlobalVar.functionDict:
-            try:
-                GlobalVar.functionDict[action]()
-            except:
-                print("Unexpected error:", sys.exc_info()[0])
-        elif action == "?":
-            for key in GlobalVar.functionDict:
-                print(key)
-        elif action == "ex":
-            break
-        else:
-            print("Unknow function")
+
             
 def _getFirstDayOfWeek(gap = "/"):
     date = datetime.datetime.today()
@@ -128,7 +113,15 @@ def removeRow():
     else:
         print("canceled")
 
-
+def updateOaInfo():
+    global GlobalVar
+    oaList = list(GlobalVar.reportDf.loc[GlobalVar.reportDf["OA_NO"] != "", "OA_NO"])
+    userId = input("user id: ")
+    password = getpass.getpass("enter password: ")
+    print(brobot.fillInOaInfo(GlobalVar.reportDf, oaList, userId, password))
+    _reorder()
+    _showBrief()
+        
 
 def firstExecute():
     global GlobalVar
@@ -168,7 +161,7 @@ def _readConfig():
 
 
 
-# In[6]:
+# In[3]:
 
 
 class GlobalVar():
@@ -176,8 +169,9 @@ class GlobalVar():
     metadata =  ['A_DATE', 'ITEM', 'OA_DESC', 'AP', 'SKILL', 'SITE', 'DUE_DATE', 'COMPLET_D', 'OWNER', 'IT_STATUS', 'OA_NO', 'PROGRAM', 'W_HOUR', 'REMARK', 'PROG_CNT', 'OA_STATUS']
     constMetadata = ['A_DATE', 'ITEM', 'OWNER']
     dateMetadata = ['DUE_DATE', 'COMPLET_D']
-    displayColumns = [2, 12, 13, 15]
-    functionDict = {"new": addNewRow, "all": displayAll, "save": saveExcel, "edit": editRow, "remove": removeRow}
+    displayColumns = [2, 12, 13, 10, 15,]
+    functionDict = {"new": addNewRow, "all": displayAll, "save": saveExcel, "edit": editRow,
+                    "remove": removeRow, "update": updateOaInfo}
     owner = None
     fileName = None
     
@@ -212,12 +206,32 @@ def _selfCheck():
         _saveXlsx()
     return True
 
+def _controller():
+    global GlobalVar
+    showFlag = True
+    action = None
+    _showBrief()
+    while(True):
+        action = input("To do? ").lower().strip()
+        if action in GlobalVar.functionDict:
+#             try:
+                GlobalVar.functionDict[action]()
+#             except:
+#                 print("Unexpected error:", sys.exc_info()[0])
+        elif action == "?":
+            for key in GlobalVar.functionDict:
+                print(key)
+        elif action == "ex":
+            break
+        else:
+            print("Unknow function")
+
 def initializeApp():
     if(_selfCheck()):
         _controller()
 
 
-# In[8]:
+# In[3]:
 
 
 initializeApp()
