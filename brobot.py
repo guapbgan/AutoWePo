@@ -29,7 +29,7 @@ def fillInOaInfo(dataFrame, oaList, username, password, url = "http://10.0.3.206
 
         waitForLoadingDialog()
         try:
-            search_elem = driver.find_element_by_css_selector(f"td>a[href*='{oaId}']")
+            search_elem = driver.find_element_by_css_selector(f"#resultsPane td>a[href*='{oaId}']")
         except NoSuchElementException:
             return f"don't find {oaId}"
         search_elem.click()
