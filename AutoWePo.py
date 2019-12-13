@@ -45,7 +45,7 @@ def _showBrief():
 
 def _saveXlsx():
     global GlobalVar
-    GlobalVar.reportDf["A_DATE"] = _getFirstDayOfWeek()
+    GlobalVar.reportDf["A_DATE"] = _getFirstDayOfWeek("")
     GlobalVar.reportDf["ITEM"] = np.arange(len(GlobalVar.reportDf)) + 1
     GlobalVar.reportDf["OWNER"] = GlobalVar.owner
     GlobalVar.reportDf.to_excel(GlobalVar.fileName, index = False)
