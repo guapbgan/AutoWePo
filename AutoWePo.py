@@ -84,7 +84,7 @@ def saveExcel():
 
 def editRow():
     global GlobalVar
-    index = input("Which row?")
+    index = input("Which row? ").strip()
     count = 0
     metadataPair = {"all": "all"}
     for column in GlobalVar.metadata:
@@ -101,7 +101,6 @@ def editRow():
             print("Not correct. Try again.")
     
     if editTarget != "all":
-#         GlobalVar.reportDf.at[int(index), metadataPair[editTarget]] = input(f"{GlobalVar.reportDf.at[int(index), metadataPair[editTarget]]} ->")
         GlobalVar.reportDf.at[int(index), metadataPair[editTarget]] = GlobalVar.filter(metadataPair[editTarget], 
                                                                                        f"{metadataPair[editTarget]}: {GlobalVar.reportDf.at[int(index), metadataPair[editTarget]]} ->")
     else:
