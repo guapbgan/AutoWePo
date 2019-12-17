@@ -18,7 +18,14 @@ def fillInOaInfo(dataFrame, oaList, username, password, url = "http://10.0.3.206
         search_elem = driver.find_element_by_css_selector("#password")
         search_elem.send_keys(password)
         search_elem = driver.find_element_by_css_selector("#loginBtn")
-        search_elem.click()
+        search_elem.click()            
+        try:
+            search_elem = driver.find_element_by_css_selector(f'p#loginmsg>font>b')
+            print(search_elem.text)
+            return False;
+        except NoSuchElementException:
+            return True;
+
         waitForLoadingDialog()
         
     def getOaInfo(driver, dataFrame, oaId):
@@ -29,7 +36,7 @@ def fillInOaInfo(dataFrame, oaList, username, password, url = "http://10.0.3.206
 
         waitForLoadingDialog()
         try:
-            search_elem = driver.find_element_by_css_selector(f"#resultsPane td>a[href*='{oaId}']")
+            search_elem = driver.find_element_by_css_selector(f'div#search\\.result\\.table td>a[href*="{oaId}"]')
         except NoSuchElementException:
             return f"don't find {oaId}"
         search_elem.click()
@@ -52,14 +59,16 @@ def fillInOaInfo(dataFrame, oaList, username, password, url = "http://10.0.3.206
         
         return f"{oaId} update successfully"
         
-    
     driver = webdriver.Chrome(executable_path="chromedriver.exe") # Use Chrome
     
-    preparePage(driver, url)
-        
     processInfo = ""
-    for oaId in oaList:
-        processInfo += getOaInfo(driver, dataFrame, oaId) + "\n"
+    if(preparePage(driver, url)):
+        for oaId in oaList:
+            processInfo += getOaInfo(driver, dataFrame, oaId) + "\n"
+    else:
+        processInfo = "update failed"
+    
     driver.close()
     return processInfo
-    
+
+        
