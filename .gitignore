@@ -2,4 +2,5 @@
 *.xls
 .ipynb_checkpoints
 person.config
+timeRecorder
 __pycache__

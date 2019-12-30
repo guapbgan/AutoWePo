@@ -4,10 +4,10 @@ import time
 import pandas as pd
 
 def fillInOaInfo(dataFrame, oaList, username, password, url = "http://10.0.3.206:8168/GlobalOA/"):
-    def waitForLoadingDialog(second = "0.5"):
+    def waitForLoadingDialog(driver ,second = 0.5):
         while(True):
             if driver.find_element_by_css_selector('div#loadingdialog').value_of_css_property("visibility") == "visible":
-                time.sleep(1)
+                time.sleep(second)
             else:
                 break    
     
@@ -25,16 +25,15 @@ def fillInOaInfo(dataFrame, oaList, username, password, url = "http://10.0.3.206
             return False;
         except NoSuchElementException:
             return True;
-
-        waitForLoadingDialog()
         
     def getOaInfo(driver, dataFrame, oaId):
+        waitForLoadingDialog(driver)
         search_elem = driver.find_element_by_css_selector("#searchBox")
         search_elem.clear()
         search_elem.send_keys(oaId)
         search_elem.send_keys(u'\ue007') #press enter
 
-        waitForLoadingDialog()
+        waitForLoadingDialog(driver)
         try:
             search_elem = driver.find_element_by_css_selector(f'div#search\\.result\\.table td>a[href*="{oaId}"]')
         except NoSuchElementException:
