@@ -36,13 +36,14 @@ def _reorder():
         GlobalVar.reportDf = pd.concat([checkPart, complementaryPart]).reset_index(drop=True)
     else:
         GlobalVar.reportDf = complementaryPart.reset_index(drop=True)
+    GlobalVar.reportDf = GlobalVar.reportDf.astype(str)
 #         complementaryPart = GlobalVar.reportDf.loc[GlobalVar.reportDf['SKILL'] != "Check"]
 #         complementaryPart = complementaryPart.sort_values(by=["OA_NO", "AP", "SKILL"])
     
 
 def _showBrief():
     def autoSubstring(targetString, n = None):
-        n = 0 if n == None else n
+        n = 0 if n == None else int(n)
         if n == 0 or n >= len(targetString):
             return targetString
         else:
@@ -189,17 +190,21 @@ def doneOa():
         except (KeyError, ValueError):
             print(f"input is not valid")
     _showBrief()
-        
 
-                            
-                                                              
+def resetPersonConfig():
+    global GlobalVar
+    _firstExecute()
 
+    _readConfig()
+    print(GlobalVar.fileName)
+
+    #check file
+    if GlobalVar.fileName != None and os.path.isfile(GlobalVar.fileName):
+        _readReport()
+    else:
+        _createNewFile()    
     
-
-
-
-# In[ ]:
-
+    _showBrief()
 
 class GlobalVar():
     reportDf = None
@@ -207,17 +212,20 @@ class GlobalVar():
                  'OA_NO', 'PROGRAM', 'W_HOUR', 'REMARK', 'PROG_CNT', 'OA_STATUS']
     constMetadata = ['A_DATE', 'ITEM', 'OWNER']
     dateMetadata = ['DUE_DATE', 'COMPLET_D']
-    displayColumns = [2, 12, 13, 10, 15,]
+
     functionDict = {"new": "addNewRow()", 
                     "newoa": "addNewRow(['OA_NO', 'AP', 'SKILL', 'IT_STATUS', 'PROGRAM', 'W_HOUR','REMARK', 'PROG_CNT'])", 
                     "all": "displayAll()", "save": "saveExcel()", "calchour": "calcHours()", 
                     "edit": "editRow()", "remove": "removeRow()", "update": "updateOaInfo()",
                     "addhour": "addHours()", "hour": "showUsingHour()",
-                    "done": "doneOa()"}
+                    "done": "doneOa()", "reset": "resetPersonConfig()"}
+    #custom settings
     owner = None
     fileName = None
+    displayColumns = [2, 12, 13, 10, 15,]
     substringLength = 30
-    
+    apOption = ["SAP", "Meeting", "Training", "User Support", "文件製作", "Others"]
+    skillOption = ["ABAP", "Check", "java", "jsp"]
     @staticmethod
     def filter(targetColumn, targetIndex = -1, showMessage = "", defaultString = "", valueString = ""):
         def checkInput(candidateList, showMessage, defaultString = "",restrictive = True):
@@ -246,16 +254,16 @@ class GlobalVar():
                     else:
                         return inputValue
         if targetColumn == "AP":
-            valueString = checkInput(["SAP", "Meeting", "Training", "User Support", "文件製作", "Others"], 
-                                     showMessage, defaultString, restrictive=False)
+            valueString = checkInput(GlobalVar.apOption, showMessage, defaultString, restrictive=False)
         elif targetColumn == "SKILL":
-            valueString = checkInput(["ABAP", "Check", "java", "jsp"], 
-                                     showMessage, defaultString, restrictive=False)
+            valueString = checkInput(GlobalVar.skillOption, showMessage, defaultString, restrictive=False)
         elif targetColumn == "DUE_DATE":
             while(True):
                 valueString = input(f"(t for today) {showMessage}")
                 try:
-                    if valueString.lower() == "t":
+                    if valueString == "":
+                        break                    
+                    elif valueString.lower() == "t":
                         valueString = datetime.datetime.today().strftime(f"%Y/%m/%d")
                     else:
                         datetime.datetime.strptime(valueString, '%Y/%m/%d')
@@ -269,7 +277,9 @@ class GlobalVar():
                 valueString = checkInput(list(map(lambda x : (monday + datetime.timedelta(x)).strftime("%Y/%m/%d"), list(range(5)))),
                                         f"(t for today) {showMessage}", restrictive = False)
                 try:
-                    if valueString.lower() == "t":
+                    if valueString == "":
+                        break
+                    elif valueString.lower() == "t":
                         valueString = datetime.datetime.today().strftime(f"%Y/%m/%d")
                     else:
                         datetime.datetime.strptime(valueString, '%Y/%m/%d')
@@ -303,7 +313,10 @@ class GlobalVar():
                 defaultString = "0"
             while(True):
                 try:
-                    matcher = pattern.match(input(f"Type operation(ex. +2.25): {defaultString} "))
+                    tempInput = input(f"Type operation(ex. +2.25): {defaultString} ")
+                    if tempInput == "":
+                        tempInput = "+0"
+                    matcher = pattern.match(tempInput)
                     valueString = str(eval(f"{float(defaultString)}{matcher.group('operator')}{matcher.group('number')}"))
                     _timeRecorder(matcher.group('operator'), float(matcher.group('number')))
                     break                                                                              
@@ -330,9 +343,6 @@ class GlobalVar():
                     else:
                         GlobalVar.reportDf.at[targetIndex, "COMPLET_D"] = dueDate
                         print(f"DUE_DATE is before today, so COMPLET_D is filled in DUE_DATE({dueDate}) automatically")
-
-
-
         else:
             valueString = _input_def(showMessage, defaultString)
         return valueString
@@ -362,12 +372,12 @@ def _firstExecute():
     print("First time execute, setting...")
     with open("person.config", "w") as newConfig:
         newConfig.write("owner=" + input("Owner Name? ").strip() + "\n")
-
-        newConfig.write("fileName=" + input("import weekly report? (keep empty if no) file name: ") + "\n")
-
+        newConfig.write("fileName=" + _input_def("import weekly report? (keep empty if no) file name: ", 
+                                                 "" if GlobalVar.fileName == None else GlobalVar.fileName) + "\n")
         newConfig.write("displayColumns="  + ",".join(list(map(str,GlobalVar.displayColumns))) + "\n")
-        
         newConfig.write(f"substringLength={GlobalVar.substringLength}\n")
+        newConfig.write(f"apOption={','.join(list(map(str, GlobalVar.apOption)))}\n")
+        newConfig.write(f"skillOption={','.join(list(map(str, GlobalVar.skillOption)))}\n")
     print("Setting Ok")
 
 def _readConfig():
@@ -383,16 +393,39 @@ def _readConfig():
                     value = matcher.group("value")
                     if key == "owner":
                         GlobalVar.owner = value
-                    if key == "fileName":
+                    elif key == "fileName":
                         GlobalVar.fileName = value
-                    if key == "displayColumns":
+                    elif key == "displayColumns":
                         GlobalVar.displayColumns = list(map(int, list(map(str.strip, value.split(",")))))
-                    if key == "substringLength":
+                    elif key == "substringLength":
                         GlobalVar.substringLength = value
+                    elif key == "apOption":
+                        GlobalVar.apOption = list(map(str, list(map(str.strip, value.split(",")))))
+                    elif key == "skillOption":
+                        GlobalVar.skillOption = list(map(str, list(map(str.strip, value.split(",")))))
         except StopIteration: # EOF
             pass
         
-        
+def _updateConfig(targetKey, targetValue):
+    pattern = re.compile(r"(?P<key>" + targetKey + ")=(?P<value>.*)")
+    with open("person.config", "r+") as config:
+        lines = config.readlines()
+        for index, line in enumerate(lines):
+            matcher = pattern.match(line.strip())
+            if matcher:
+                lines[index] = f"{targetKey}={targetValue}\n"
+                break
+        config.seek(0)
+        config.writelines(lines)
+                        
+def _createNewFile():
+    if GlobalVar.fileName == "" or GlobalVar.fileName == None:
+        GlobalVar.fileName = f"WeeklyReport-V1.0-{_getFirstDayOfWeek('.')}-{GlobalVar.owner}.xlsx"
+    GlobalVar.reportDf = pd.DataFrame(columns = GlobalVar.metadata)
+    _updateConfig("fileName", GlobalVar.fileName)
+    _saveXlsx()                        
+                        
+
 def _selfCheck():
     global GlobalVar
     if not os.path.isfile("person.config"):
@@ -409,22 +442,7 @@ def _selfCheck():
     if GlobalVar.fileName != None and os.path.isfile(GlobalVar.fileName):
         _readReport()
     else:
-        GlobalVar.fileName = f"WeeklyReport-V1.0-{_getFirstDayOfWeek('.')}-{GlobalVar.owner}.xlsx"
-        GlobalVar.reportDf = pd.DataFrame(columns = GlobalVar.metadata)
-        with open("person.config", "r+") as config:
-            pattern = re.compile(r"(?P<key>[a-zA-Z1-9]*)=(?P<value>.*)")
-            with open("person.config", "r+") as config:
-                lines = config.readlines()
-                for index, line in enumerate(lines):
-                    matcher = pattern.match(line.strip())
-                    if matcher:
-                        key = matcher.group("key")
-                        value = matcher.group("value")
-                        if key == "fileName":
-                            lines[index] = f"fileName={GlobalVar.fileName}\n"
-                config.seek(0)
-                config.writelines(lines)
-        _saveXlsx()
+        _createNewFile()
     
     #check displayColumns
     try:
@@ -433,14 +451,21 @@ def _selfCheck():
     except (IndexError, TypeError):
         print(f"load displayColumns error, default displayColumns to {','.join(list(map(str,GlobalVar.displayColumns)))}")
 
-                       
     #check substringLength
     try:
         int(GlobalVar.substringLength)
     except (ValueError, TypeError):
         print("load substringLength error, default substringLength to 30")
         GlobalVar.substringLength = 30
-                       
+
+    #check apOption
+    if GlobalVar.apOption == None:
+          print(f"loading apOption error, default apOption to {','.join(list(map(str, GlobalVar.apOption)))}")
+    
+    #check skillOption
+    if GlobalVar.skillOption == None:
+          print(f"loading skillOption error, default apOption to {','.join(list(map(str, GlobalVar.skillOption)))}")
+                
     return True
 
 def _controller():

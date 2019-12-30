@@ -43,13 +43,13 @@ def fillInOaInfo(dataFrame, oaList, username, password, url = "http://10.0.3.206
         driver.switch_to.frame(driver.find_element_by_id(oaId))
         
         subject = driver.find_element_by_css_selector('span#txtSubject.fieldText').text
-        dataFrame.loc[dataFrame["OA_NO"] == oaId, "OA_DESC"] = subject
+        dataFrame.loc[dataFrame["OA_NO"] == oaId, "OA_DESC"] = str(subject)
         
         affectedSite = driver.find_element_by_css_selector('div.fieldBodyCoulmnLeft>span.privilegeStatus0>span.privilegeStatus5>div.fieldSubBlock>span.privilegeIndividual>div>span.fieldText').text
-        dataFrame.loc[dataFrame["OA_NO"] == oaId, "SITE"] = affectedSite
+        dataFrame.loc[dataFrame["OA_NO"] == oaId, "SITE"] = str(affectedSite)
 
         dueDate = driver.find_element_by_css_selector('input#setRequestDateX').get_attribute('value').replace("-","/")
-        dataFrame.loc[dataFrame["OA_NO"] == oaId, "DUE_DATE"] = dueDate
+        dataFrame.loc[dataFrame["OA_NO"] == oaId, "DUE_DATE"] = str(dueDate)
         
         driver.switch_to.default_content()
         
