@@ -46,7 +46,7 @@ def fillInOaInfo(dataFrame, oaList, username, password, url = "http://10.0.3.206
         dataFrame.loc[dataFrame["OA_NO"] == oaId, "OA_DESC"] = str(subject)
         
         affectedSite = driver.find_element_by_css_selector('div.fieldBodyCoulmnLeft>span.privilegeStatus0>span.privilegeStatus5>div.fieldSubBlock>span.privilegeIndividual>div>span.fieldText').text
-        dataFrame.loc[dataFrame["OA_NO"] == oaId, "SITE"] = str(affectedSite)
+        dataFrame.loc[dataFrame["OA_NO"] == oaId, "SITE"] = str(affectedSite).replace("USI", "")
 
         dueDate = driver.find_element_by_css_selector('input#setRequestDateX').get_attribute('value').replace("-","/")
         dataFrame.loc[dataFrame["OA_NO"] == oaId, "DUE_DATE"] = str(dueDate)
@@ -61,9 +61,12 @@ def fillInOaInfo(dataFrame, oaList, username, password, url = "http://10.0.3.206
     driver = webdriver.Chrome(executable_path="chromedriver.exe") # Use Chrome
     
     processInfo = ""
+    searchedOaDict = dict()
     if(preparePage(driver, url)):
         for oaId in oaList:
-            processInfo += getOaInfo(driver, dataFrame, oaId) + "\n"
+            if searchedOaDict.get(oaId) == None:
+                processInfo += getOaInfo(driver, dataFrame, oaId) + "\n"
+                searchedOaDict[oaId] = "finished"
     else:
         processInfo = "update failed"
     
