@@ -13,6 +13,7 @@ import datetime
 import brobot
 import getpass
 import math
+import traceback
 from tabulate import tabulate
 
 import win32console
@@ -56,7 +57,7 @@ def _showBrief():
 
 def _saveXlsx():
     global GlobalVar
-    GlobalVar.reportDf["A_DATE"] = _getFirstDayOfWeek("")
+    GlobalVar.reportDf["A_DATE"] = GlobalVar.firstDayOfWorkWeek.replace("/", "")
     GlobalVar.reportDf["ITEM"] = np.arange(len(GlobalVar.reportDf)) + 1
     GlobalVar.reportDf["OWNER"] = GlobalVar.owner
     if "identity" in GlobalVar.reportDf.columns:
@@ -65,10 +66,13 @@ def _saveXlsx():
         tempDataFrame = GlobalVar.reportDf
     tempDataFrame.to_excel(GlobalVar.fileName, index = False)
     
-def _getFirstDayOfWeek(gap = "/"):
+def _getFirstDayOfWeek(gap = "/", typeOfDate = 'str'):
     date = datetime.datetime.today()
     start = date - datetime.timedelta(days=date.weekday())
-    return start.strftime(f"%Y{gap}%m{gap}%d")
+    if typeOfDate == 'str':
+        return start.strftime(f"%Y{gap}%m{gap}%d")
+    elif typeOfDate == 'datetime':
+        return start.replace(hour=0, minute=0, second=0, microsecond=0)
 
 def _input_def(prompt, default=''):
     keys = []
@@ -88,6 +92,9 @@ def displayAll():
         print(tabulate(GlobalVar.reportDf.drop(["identity"], axis = 1), headers='keys', tablefmt="grid"))
     else:
         print(tabulate(GlobalVar.reportDf, headers='keys', tablefmt="grid"))
+
+def displaySimple():
+    _showBrief()
     
 def addNewRow(assignColumnDict = [], defaultColumnDict = dict()):
     global GlobalVar
@@ -300,7 +307,7 @@ def doneOa():
 
 def resetPersonConfig():
     global GlobalVar
-    _settleWork()
+    takeBreak()
     _firstExecute()
 
     _readConfig()
@@ -325,7 +332,7 @@ def setting():
             inputValue = int(input(f"Pick one? "))
             settingWord = GlobalVar.settingOption[inputValue]
             break
-        except (TypeError, IndexError):
+        except (TypeError, IndexError, ValueError):
             print(f"input is not valid")
     
     newSetting = _input_def(f"change {settingWord}: ", _getConfig(settingWord))
@@ -348,13 +355,13 @@ class GlobalVar():
     functionDict = {"new": "addNewRow()", 
                     "oa": "addNewRow(['OA_NO', 'AP', 'SKILL', 'IT_STATUS', 'PROGRAM', 'W_HOUR','REMARK', 'PROG_CNT'])",
                     "meeting": "addNewRow(['OA_DESC', 'DUE_DATE', 'COMPLET_D', 'W_HOUR', 'REMARK'], {'AP': 'Meeting', 'SKILL': 'Check', 'PROG_CNT': '0'})",
-                    "all": "displayAll()", "save": "saveExcel()", "weekhour": "calcHours()", 
+                    "all": "displayAll()", "simple": "displaySimple()", "save": "saveExcel()", "weekhour": "calcHours()", 
                     "edit": "editRow()", "remove": "removeRow()", "update": "updateOaInfo()",
                     "addhour": "addHours()", "dayhour": "showUsingHour()",
-                    "done": "doneOa()", "reset": "resetPersonConfig()",
+                    "done": "doneOa()", 
                     "work": "working()", "break": "takeBreak()",
                     "setting": "setting()"}
-    
+                    #"reset": "resetPersonConfig()"
     #temp work area
     workingIdentity = None
     workingTime = None
@@ -367,6 +374,8 @@ class GlobalVar():
     apOption = ["SAP", "Meeting", "Training", "User Support", "文件製作", "Others"]
     skillOption = ["ABAP", "Check", "java", "jsp"]
     minuteOffset = 0
+    firstDayOfWorkWeek = None
+                     
     @staticmethod
     def filter(targetColumn, targetIndex = -1, showMessage = "", defaultString = "", valueString = ""):
         def checkInput(candidateList, showMessage, defaultString = "",restrictive = True):
@@ -513,15 +522,16 @@ def _timeRecorder(number):
 def _firstExecute():
     global GlobalVar
     print("First time execute, setting...")
+    ownerName = input("Owner Name? ").strip()                  
     with open("person.config", "w") as newConfig:
-        newConfig.write("owner=" + input("Owner Name? ").strip() + "\n")
-        newConfig.write("fileName=" + _input_def("import weekly report? (keep empty if no) file name: ", 
-                                                 "" if GlobalVar.fileName == None else GlobalVar.fileName) + "\n")
+        newConfig.write(f"owner={ownerName}\n")
+        newConfig.write("fileName=" + "" if GlobalVar.fileName == None else GlobalVar.fileName + "\n")
         newConfig.write("displayColumns="  + ",".join(list(map(str,GlobalVar.displayColumns))) + "\n")
         newConfig.write(f"substringLength={GlobalVar.substringLength}\n")
         newConfig.write(f"apOption={','.join(list(map(str, GlobalVar.apOption)))}\n")
         newConfig.write(f"skillOption={','.join(list(map(str, GlobalVar.skillOption)))}\n")
         newConfig.write(f"minuteOffset={GlobalVar.minuteOffset}\n")
+        newConfig.write(f"firstDayOfWorkWeek={_getFirstDayOfWeek()}\n")
 
     print("Setting Ok")
 
@@ -550,6 +560,8 @@ def _readConfig():
                         GlobalVar.skillOption = list(map(str, list(map(str.strip, value.split(",")))))
                     elif key == "minuteOffset":
                         GlobalVar.minuteOffset = value
+                    elif key == "firstDayOfWorkWeek":
+                        GlobalVar.firstDayOfWorkWeek = value
         except StopIteration: # EOF
             pass
         
@@ -580,8 +592,8 @@ def _getConfig(targetKey):
                 return matcher.group("value")
                         
 def _createNewFileNameAndDataFrame():
-    if GlobalVar.fileName == "" or GlobalVar.fileName == None:
-        GlobalVar.fileName = f"WeeklyReport-V1.0-{_getFirstDayOfWeek('.')}-{GlobalVar.owner}.xlsx"
+    global GlobalVar
+    GlobalVar.fileName = f"WeeklyReport-V1.0-{GlobalVar.firstDayOfWorkWeek.replace('/','.')}-{GlobalVar.owner}.xlsx"
     GlobalVar.reportDf = pd.DataFrame(columns = GlobalVar.metadata + ["identity"])
                    
                         
@@ -593,13 +605,35 @@ def _selfCheck():
         
     _readConfig()
     
+    #check week
+    newWeek = False
+    if GlobalVar.firstDayOfWorkWeek == None:
+        GlobalVar.firstDayOfWorkWeek = _getFirstDayOfWeek()
+        _updateConfig("firstDayOfWorkWeek", GlobalVar.firstDayOfWorkWeek)
+        newWeek = True
+    else:
+        try:
+            workWeekInConfig = datetime.datetime.strptime(GlobalVar.firstDayOfWorkWeek, "%Y/%m/%d")
+            if workWeekInConfig < _getFirstDayOfWeek(typeOfDate="datetime"):
+                answer = input("New week arrive, press enter to create new week report or input any character to stay in old week. ")
+                if answer == "":
+                    GlobalVar.firstDayOfWorkWeek = _getFirstDayOfWeek()
+                    _updateConfig("firstDayOfWorkWeek", GlobalVar.firstDayOfWorkWeek)
+                    newWeek = True
+        except ValueError:
+            GlobalVar.firstDayOfWorkWeek = _getFirstDayOfWeek()
+            _updateConfig("firstDayOfWorkWeek", GlobalVar.firstDayOfWorkWeek)
+            newWeek = True
+            print("Get error when read firstDayOfWorkWeek, set it to new week")
+
+                        
     #check owner
     if GlobalVar.owner == None:
-        print("ERROR: do not get owner name")
-        return False
+        GlobalVar.owner = "NoName"
+        print("no owner name, default owner name to NoName")
     
-    #check file
-    if GlobalVar.fileName != None and os.path.isfile(GlobalVar.fileName):
+    #check file        
+    if GlobalVar.fileName != None and os.path.isfile(GlobalVar.fileName) and not newWeek:
         _readReport()
         _reorder()
     else:
@@ -652,10 +686,18 @@ def _controller():
         timeHint = f"[{_getNowWithOffset().strftime('%Y/%m/%d %H:%M')}{'' if GlobalVar.minuteOffset == 0 else '(' + str(GlobalVar.minuteOffset) + ')'}]"
         action = input(f"{timeHint}{workHint} To do? ").lower().strip()
         if action in GlobalVar.functionDict:
-#             try:
+            try:
                 eval(GlobalVar.functionDict[action])
-#             except:
-#                 print("Unexpected error:", sys.exc_info()[0])
+            except Exception as e:
+                error_class = e.__class__.__name__ #取得錯誤類型
+                detail = e.args[0] #取得詳細內容
+                cl, exc, tb = sys.exc_info() #取得Call Stack
+                lastCallStack = traceback.extract_tb(tb)[-1] #取得Call Stack的最後一筆資料
+                fileName = lastCallStack[0] #取得發生的檔案名稱
+                lineNum = lastCallStack[1] #取得發生的行號
+                funcName = lastCallStack[2] #取得發生的函數名稱
+                errMsg = "File \"{}\", line {}, in {}: [{}] {}".format(fileName, lineNum, funcName, error_class, detail)
+                print(errMsg)
         elif action == "?":
             for key in GlobalVar.functionDict:
                 print(key)
