@@ -172,26 +172,28 @@ def working():
     while(True):
         dictPattern = re.compile(r"addNewRow")
         candidateFunctionList = []
+        validFunction = dict()
         for key, value in GlobalVar.functionDict.items():
             if dictPattern.match(value) != None:
                 candidateFunctionList.append(key)
+                validFunction[key] = value
         tempInput = input(f"Which row? Or create one? ({', '.join(candidateFunctionList)}) ").strip()
-        try:
-            try:     
-                tempInput = int(tempInput)
-                GlobalVar.workingIdentity = str(GlobalVar.reportDf.loc[tempInput, ["identity"]].tolist()[0])
-            except ValueError:
-                if GlobalVar.functionDict.get(tempInput) == None:
-                    raise
-                else:
-                    GlobalVar.workingIdentity = str(eval(GlobalVar.functionDict.get(tempInput)))
-            except:
-                raise
-        except (KeyError, ValueError):
+        try:     
+            tempInput = int(tempInput)
+            GlobalVar.workingIdentity = str(GlobalVar.reportDf.loc[tempInput, ["identity"]].tolist()[0])
+            break
+        except ValueError:
+            if validFunction.get(tempInput) == None:
+                print(f"input is not valid")
+            else:
+                GlobalVar.workingIdentity = str(eval(validFunction.get(tempInput)))
+                break
+        except KeyError:
             print(f"input is not valid")
-        floorMinute = math.floor(int(_getNowWithOffset().strftime("%M")) / 15) * 15  
-        GlobalVar.workingTime = _getNowWithOffset().replace(minute=floorMinute, second=0, microsecond=0).strftime("%Y/%m/%d %H:%M:%S")
-        break               
+
+            
+    floorMinute = math.floor(int(_getNowWithOffset().strftime("%M")) / 15) * 15  
+    GlobalVar.workingTime = _getNowWithOffset().replace(minute=floorMinute, second=0, microsecond=0).strftime("%Y/%m/%d %H:%M:%S")
     print(f"Start working: Row {_getIndexByIdentity(GlobalVar.workingIdentity)} {_getDataByIdentity(GlobalVar.workingIdentity, 'OA_DESC')}")
 
 def _getNowWithOffset():
