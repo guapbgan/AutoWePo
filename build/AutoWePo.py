@@ -560,7 +560,13 @@ def resetPersonConfig():
         _createNewFileNameAndDataFrame()
         _updateConfig("fileName", GlobalVar.fileName)
         _saveXlsx()     
-                       
+
+def resetTimer():
+    defaultFileName = "timeRecorder"
+    with open(defaultFileName, "w") as file:
+        file.write(datetime.datetime.today().strftime("%Y/%m/%d") + ",0")
+    print("Reset successfully")
+                     
 def saveExcel():
     _saveXlsx()
 
@@ -671,7 +677,7 @@ class GlobalVar():
                     "addhour": "addHours()", "dayhour": "showUsingHour()", "transfer": "transferHour()",
                     "done": "doneOa()", 
                     "work": "working()", "break": "takeBreak()",
-                    "setting": "setting()"}
+                    "setting": "setting()", "resetTimer": "resetTimer()"}
                     #"reset": "resetPersonConfig()"
     #temp work area
     workingIdentity = None
