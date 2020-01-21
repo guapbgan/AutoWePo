@@ -677,7 +677,7 @@ class GlobalVar():
                     "addhour": "addHours()", "dayhour": "showUsingHour()", "transfer": "transferHour()",
                     "done": "doneOa()", 
                     "work": "working()", "break": "takeBreak()",
-                    "setting": "setting()", "resetTimer": "resetTimer()"}
+                    "setting": "setting()", "resettimer": "resetTimer()"}
                     #"reset": "resetPersonConfig()"
     #temp work area
     workingIdentity = None
