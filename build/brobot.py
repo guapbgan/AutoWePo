@@ -1,5 +1,6 @@
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import WebDriverException
 import time
 import pandas as pd
 
@@ -59,7 +60,7 @@ def fillInOaInfo(dataFrame, oaList, username, password, url = "http://10.0.3.206
         return f"{oaId} update successfully"
         
     try:
-        driver = webdriver.Chrome(executable_path="chromedriver.exe") # Use Chrome
+        driver = webdriver.Chrome(executable_path="build\\chromedriver.exe") # Use Chrome
     except WebDriverException:
         print("'chromedriver.exe' executable needs to be in dir build\\. Please see https://sites.google.com/a/chromium.org/chromedriver/home")
         return "update failed"
