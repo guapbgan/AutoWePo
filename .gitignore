@@ -1,6 +1,7 @@
 *.xlsx
 *.xls
-.ipynb_checkpoints
+build/.ipynb_checkpoints
 person.config
 timeRecorder
-__pycache__
+systemCommand
+build/__pycache__
