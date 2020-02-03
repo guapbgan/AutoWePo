@@ -1,0 +1,29 @@
+Function可用指令
+
+new: 新增項目
+oa: 新增OA項目
+meeting: 新增會議項目
+all: 完整展示週報
+simple: 簡易展示週報
+save: 儲存至excel
+weekhour: 計算整週工作時數
+edit: 編輯某工作欄位
+remove: 移除某工作(工作時數不影響dayhour)
+update: 根據OA號碼更新OA_DESC、SITE與DUE_DATE
+addhour: 增減某工作時數
+dayhour: 計算當天工作時數
+transfer: 轉移某工作時數至指定工作
+done: 為某工作設定done並填寫COMPLET_D
+work: 開始進行某工作計時，或進行新工作計時(透過new、oa、meeting)
+break: 結束目前的工作計時
+resettimer: 重置當天工作時數
+
+setting: 設定程式參數
+  參數	displayColumns: 調整simple所展示的欄位(使用index)
+	substringLength: 在simple展示時，字元長度超過設定字數將自動省略後續文字
+	apOtion: 增加輸入AP欄位時之選項
+	skillOption: 增加輸入AP欄位時之選項
+	minuteOffset: 調整時間快慢，以分鐘為單位
+
+
+

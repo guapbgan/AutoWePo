@@ -26,7 +26,7 @@ _stdin = win32console.GetStdHandle(win32console.STD_INPUT_HANDLE)
 def _breakString(textString, breakLength = 35):
     textLength = len(textString)
     tokenLocation = breakLength
-    while(tokenLocation < textLength):
+    while(tokenLocation < textLength or breakLength <= 0):
         for index in range(tokenLocation, textLength):
             if textString[index] == ",":
                 textString = textString[:index + 1] + "\n" + textString[index + 1:]
@@ -160,15 +160,17 @@ def _getNowWithOffset():
 
 def _initializeTerminal():
     print("Initializing terminal...")
+    width = 140
+    height = 30
     if not os.path.isfile("systemCommand"):
         with open("systemCommand", "w") as file:
             #set window size
-            file.write("mode 120,30\n")
+            file.write(f"mode {width},{height}\n")
             #set window buffer size
-            file.write('powershell -command "&{$H=get-host;$W=$H.ui.rawui;$B=$W.buffersize;$B.width=120;$B.height=600;$W.buffersize=$B;}"\n')
+            file.write(f'powershell -command "&{{$H=get-host;$W=$H.ui.rawui;$B=$W.buffersize;$B.width={width};$B.height=600;$W.buffersize=$B;}}"\n')
     with open("systemCommand", "r") as file:
         for index, line in enumerate(file):
-            print(f"Executing command {index}")
+            print(f"Executing command {index}", end = "\r")
             if os.system(line) != 0:
                 print(f"Fail to execute \"{line}\"")                        
 
@@ -309,7 +311,7 @@ def _selfCheck():
 
     #check substringLength
     try:
-        int(GlobalVar.substringLength)
+        GlobalVar.substringLength = int(GlobalVar.substringLength)
     except (ValueError, TypeError):
         print("load substringLength error, default substringLength to 0 (no effected)")
         GlobalVar.substringLength = 0
@@ -331,10 +333,10 @@ def _selfCheck():
     
     #check breakStringLength
     try:
-        int(GlobalVar.breakStringLength)
+        GlobalVar.breakStringLength = int(GlobalVar.breakStringLength)
     except (ValueError, TypeError):
         print("load breakStringLength error, default breakStringLength to 35")
-        GlobalVar.substringLength = 35
+        GlobalVar.breakStringLength = 35
               
     return True
               
@@ -381,7 +383,11 @@ def _timeRecorder(number):
     defaultFileName = "timeRecorder"
     if os.path.isfile(defaultFileName):
         with open(defaultFileName, "r+") as file:
-            lastTime, usedHour = tuple(file.read().split(","))
+            try:
+                lastTime, usedHour = tuple(file.read().split(","))
+            except ValueError:
+                print(f"No data in {defaultFileName}, reset to now")
+                lastTime, usedHour = datetime.datetime.today().strftime("%Y/%m/%d"), "0"
             lastDate = datetime.datetime.strptime(lastTime, "%Y/%m/%d").date()
             if lastDate == datetime.date.today():
                 usedHour = eval(f"{float(usedHour)}+{number}")
@@ -563,9 +569,16 @@ def resetPersonConfig():
 
 def resetTimer():
     defaultFileName = "timeRecorder"
-    with open(defaultFileName, "w") as file:
-        file.write(datetime.datetime.today().strftime("%Y/%m/%d") + ",0")
-    print("Reset successfully")
+    while(True):
+        try:
+            resetNum = int(input("Reset to? "))
+            with open(defaultFileName, "w") as file:
+                file.write(datetime.datetime.today().strftime("%Y/%m/%d") + "," + str(resetNum))
+            print("Reset successfully")
+            break
+        except ValueError:
+            print(f"input is not valid")
+
                      
 def saveExcel():
     _saveXlsx()
@@ -586,9 +599,9 @@ def setting():
     newSetting = _input_def(f"change {settingWord}: ", _getConfig(settingWord))
     try:
         newSetting = int(newSetting)
+        exec(f"GlobalVar.{settingWord} = {newSetting}")
     except:
-        pass
-    exec(f"GlobalVar.{settingWord} = {newSetting}")
+        exec(f"GlobalVar.{settingWord} = {newSetting.split(',')}")
     _updateConfig(settingWord, newSetting)
                      
 def showUsingHour():
@@ -668,7 +681,7 @@ class GlobalVar():
                  'OA_NO', 'PROGRAM', 'W_HOUR', 'REMARK', 'PROG_CNT', 'OA_STATUS']
     constMetadata = ['A_DATE', 'ITEM', 'OWNER']
     dateMetadata = ['DUE_DATE', 'COMPLET_D']
-    settingOption = ["displayColumns", "substringLength", "apOption", "skillOption", "minuteOffset"]
+    settingOption = ["displayColumns", "substringLength", "apOption", "skillOption", "minuteOffset", "breakStringLength"]
     functionDict = {"new": "addNewRow()", 
                     "oa": "addNewRow(['OA_NO', 'AP', 'SKILL', 'IT_STATUS', 'PROGRAM', 'W_HOUR','REMARK', 'PROG_CNT'])",
                     "meeting": "addNewRow(['OA_DESC', 'DUE_DATE', 'COMPLET_D', 'W_HOUR', 'REMARK'], {'AP': 'Meeting', 'SKILL': 'Check', 'PROG_CNT': '0'})",
@@ -696,6 +709,7 @@ class GlobalVar():
                      
     @staticmethod
     def filter(targetColumn, targetIndex = -1, showMessage = "", defaultString = "", valueString = ""):
+        global GlobalVar
         def checkInput(candidateList, showMessage, defaultString = "",restrictive = True):
             for index, value in enumerate(candidateList):
                 print(f"{index}. {value} |" , end=" ")
@@ -747,7 +761,7 @@ class GlobalVar():
             valueString = checkInput(GlobalVar.skillOption, showMessage, defaultString, restrictive=False)
         elif targetColumn == "DUE_DATE":
             while(True):
-                valueString = input(f"(t for today) {showMessage}")
+                valueString = _input_def(f"(t for today) {showMessage}", defaultString)
                 try:
                     if valueString == "": #to keep valueString empty
                         break                    
@@ -763,7 +777,7 @@ class GlobalVar():
             monday = datetime.datetime.today() - datetime.timedelta(days=datetime.datetime.today().weekday())
             while(True):
                 valueString = checkInput(list(map(lambda x : (monday + datetime.timedelta(x)).strftime("%Y/%m/%d"), list(range(5)))),
-                                        f"(t for today) {showMessage}", restrictive = False)
+                                        f"(t for today) {showMessage}", defaultString = defaultString, restrictive = False)
                 try:
                     if valueString == "": #to keep valueString empty
                         break                    
@@ -812,16 +826,20 @@ class GlobalVar():
             valueString = checkInput(["0", "1"], showMessage = showMessage, defaultString = defaultString)
         elif targetColumn == "OA_STATUS":
             valueString = checkInput(["done"], showMessage = showMessage, defaultString = defaultString)
-        elif targetColumn == "REMARK":
-            valueString = _breakString(_input_def(showMessage, defaultString))
+        elif targetColumn == "REMARK" or targetColumn == "PROGRAM":
+            valueString = _breakString(_input_def(showMessage, defaultString), GlobalVar.breakStringLength)
         else:
             valueString = _input_def(showMessage, defaultString)
         return valueString
 
 def initializeApp():
-    _initializeTerminal()
-    if(_selfCheck()):
-        _controller()
+    try:
+        _initializeTerminal()
+        if(_selfCheck()):
+            _controller()
+    except:
+        traceback.print_exc()
+        os.system("pause")
 
 
 # In[ ]:
