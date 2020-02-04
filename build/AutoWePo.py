@@ -26,18 +26,21 @@ _stdin = win32console.GetStdHandle(win32console.STD_INPUT_HANDLE)
 def _breakString(textString, breakLength = 35):
     textLength = len(textString)
     tokenLocation = breakLength
-    while(tokenLocation < textLength or breakLength <= 0):
+    breakFlag = False
+    pattern = re.compile(r"[,\.，\s。]")
+    while(tokenLocation < textLength and breakLength > 0):
         for index in range(tokenLocation, textLength):
-            if textString[index] == ",":
-                textString = textString[:index + 1] + "\n" + textString[index + 1:]
-                textLength += 1
-                tokenLocation = index + 1 + breakLength # +1 for skiping \n
-                break
-            elif textString[index] == " ":
-                textString = textString[:index] + "\n" + textString[index + 1:]
-                textLength += 1
-                tokenLocation = index + 1 + breakLength # +1 for skiping \n
-                break
+            print(index)
+            if breakFlag:
+                if not pattern.match(textString[index]):
+                    breakFlag = False
+                    textString = textString[:index] + "\n" + textString[index:]
+                    textLength += 1
+                    tokenLocation = index + 1 + breakLength # +1 for skiping \n
+                    break
+            else:
+                if pattern.match(textString[index]):
+                    breakFlag = True
         if index == textLength - 1:
             break
     return textString
