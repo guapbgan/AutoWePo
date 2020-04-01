@@ -30,7 +30,6 @@ def _breakString(textString, breakLength = 35):
     pattern = re.compile(r"[,\.，\s。]")
     while(tokenLocation < textLength and breakLength > 0):
         for index in range(tokenLocation, textLength):
-            print(index)
             if breakFlag:
                 if not pattern.match(textString[index]):
                     breakFlag = False
@@ -232,8 +231,8 @@ def _readReport():
         
 def _reorder():
     global GlobalVar
-    checkPart = GlobalVar.reportDf.loc[GlobalVar.reportDf['SKILL'] == "Check"].sort_values(by=["AP"])
-    complementaryPart = GlobalVar.reportDf.loc[GlobalVar.reportDf['SKILL'] != "Check"].sort_values(by=["OA_NO", "AP", "OA_DESC", "SKILL"])
+    checkPart = GlobalVar.reportDf.loc[GlobalVar.reportDf['SKILL'] == "Check"].sort_values(by=["AP", "OA_DESC"])
+    complementaryPart = GlobalVar.reportDf.loc[GlobalVar.reportDf['SKILL'] != "Check"].sort_values(by=["AP", "SKILL", "OA_NO", "OA_DESC"])
     if checkPart.size > 0:
         GlobalVar.reportDf = pd.concat([checkPart, complementaryPart]).reset_index(drop=True)
     else:
