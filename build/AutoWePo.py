@@ -225,10 +225,8 @@ def _readReport():
     global GlobalVar
     GlobalVar.reportDf = pd.read_excel(GlobalVar.fileName, header = 0, dtype = str)
     GlobalVar.reportDf = GlobalVar.reportDf.replace(np.nan, "")
-    
-    #get each row a identity
-    GlobalVar.reportDf = GlobalVar.reportDf.assign(identity = pd.Series(np.arange(GlobalVar.reportDf.shape[0])).array).astype(str)
-        
+    _resetIdentity()
+   
 def _reorder():
     global GlobalVar
     checkPart = GlobalVar.reportDf.loc[GlobalVar.reportDf['SKILL'] == "Check"].sort_values(by=["AP", "OA_DESC"])
@@ -239,6 +237,12 @@ def _reorder():
         GlobalVar.reportDf = complementaryPart.reset_index(drop=True)
     GlobalVar.reportDf = GlobalVar.reportDf.astype(str)
 
+def _resetIdentity():
+    global GlobalVar
+    #give each row a identity
+    GlobalVar.reportDf = GlobalVar.reportDf.assign(identity = pd.Series(np.arange(GlobalVar.reportDf.shape[0])).array).astype(str)
+        
+                        
 def _saveXlsx():
     global GlobalVar
     GlobalVar.reportDf["A_DATE"] = GlobalVar.firstDayOfWorkWeek.replace("/", "")
@@ -479,7 +483,21 @@ def displayAll():
     width, height = getWidthAndHeight(outputString)
     _resizeTerminal(width=width, height=height)
     print(outputString)
-    input("Press any key to continue...")
+    input("Press enter to continue...")
+    _defaultTerminalSize()
+    _showBrief()
+    
+def displayAllDebug():
+    def getWidthAndHeight(string):
+        width = string.find("\n") + 1
+        height = len(string) // width + 1
+        return width, height
+    global GlobalVar
+    outputString = tabulate(GlobalVar.reportDf, headers='keys', tablefmt="grid")
+    width, height = getWidthAndHeight(outputString)
+    _resizeTerminal(width=width, height=height)
+    print(outputString)
+    input("Press enter to continue...")
     _defaultTerminalSize()
     _showBrief()
                        
@@ -675,7 +693,7 @@ def working():
 
 
           
-          
+          # In[ ]:
 #Global
 class GlobalVar():
     reportDf = None
@@ -692,7 +710,8 @@ class GlobalVar():
                     "addhour": "addHours()", "dayhour": "showUsingHour()", "transfer": "transferHour()",
                     "done": "doneOa()", 
                     "work": "working()", "break": "takeBreak()",
-                    "setting": "setting()", "resettimer": "resetTimer()"}
+                    "setting": "setting()", "resettimer": "resetTimer()",
+                    "debug": "displayAllDebug()"}
                     #"reset": "resetPersonConfig()"
     #temp work area
     workingIdentity = None
