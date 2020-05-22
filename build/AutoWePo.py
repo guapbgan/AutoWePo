@@ -704,7 +704,7 @@ class GlobalVar():
     settingOption = ["displayColumns", "substringLength", "apOption", "skillOption", "minuteOffset", "breakStringLength"]
     functionDict = {"new": "addNewRow()", 
                     "oa": "addNewRow(['OA_NO', 'AP', 'SKILL', 'IT_STATUS', 'PROGRAM', 'W_HOUR','REMARK', 'PROG_CNT'])",
-                    "meeting": "addNewRow(['OA_DESC', 'DUE_DATE', 'COMPLET_D', 'W_HOUR', 'REMARK'], {'AP': 'Meeting', 'SKILL': 'Check', 'PROG_CNT': '0'})",
+                    "meeting": "addNewRow(['OA_DESC', 'COMPLET_D', 'W_HOUR', 'REMARK'], {'AP': 'Meeting', 'SKILL': 'Check', 'PROG_CNT': '0'})",
                     "all": "displayAll()", "simple": "displaySimple()", "save": "saveExcel()", "weekhour": "calcHours()", 
                     "edit": "editRow()", "remove": "removeRow()", "update": "updateOaInfo()",
                     "addhour": "addHours()", "dayhour": "showUsingHour()", "transfer": "transferHour()",
