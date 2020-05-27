@@ -98,7 +98,7 @@ def _controller():
         else:
             print("Unknow function")
 
-def _createNewFileNameAndDataFrame():
+def _createNewFileNameAndDataFrame(newDataFrame = True):
     global GlobalVar
     tempFileName = f"WeeklyReport-V1.0-{GlobalVar.firstDayOfWorkWeek.replace('/','.')}-{GlobalVar.owner}"
     fileExt = ".xlsx"
@@ -107,7 +107,9 @@ def _createNewFileNameAndDataFrame():
         count +=1
         tempFileName = f"{tempFileName}-{count}"
     GlobalVar.fileName = tempFileName + fileExt
-    GlobalVar.reportDf = pd.DataFrame(columns = GlobalVar.metadata + ["identity"])
+    if newDataFrame:
+        GlobalVar.reportDf = pd.DataFrame(columns = GlobalVar.metadata + ["identity"])
+        
 
 def _defaultTerminalSize():
     with open("systemCommand", "r") as file:
@@ -292,10 +294,35 @@ def _selfCheck():
         print("no owner name, default owner name to NoName")
     
     #check file        
-    if GlobalVar.fileName != None and os.path.isfile(GlobalVar.fileName) and not newWeek:
+    if GlobalVar.fileName != None and os.path.isfile(GlobalVar.fileName):
         try:
             _readReport()
             _reorder()
+            #if False:
+            if newWeek:
+                print(tabulate(GlobalVar.reportDf, headers='keys', tablefmt="grid"))
+                pattern = re.compile(r"(?:(?P<index>\d+)\s*,?)")
+                originalReport = GlobalVar.reportDf.copy()
+                originalReport.loc[:, ["W_HOUR"]] = 0
+                print("Transfer work row in old week?", end='')
+                while True:                    
+                    indexString = input("Input index joined with comma or blank space: \n")
+                    if indexString != '':    
+                        matcherList = pattern.findall(indexString)                            
+                        indexList = list()
+                        for group in matcherList:
+                            indexList.append(group)
+                        GlobalVar.reportDf = originalReport.loc[indexList, :]
+                        _reorder()
+                        print(tabulate(GlobalVar.reportDf, headers='keys', tablefmt="grid"))
+                        if input("Confrim? Input any character to select again :") == '':
+                            break
+                            _createNewFileNameAndDataFrame(newDataFrame = False)
+                            _updateConfig("fileName", GlobalVar.fileName)
+                            _saveXlsx()
+                    else:  
+                        break
+
         except FileNotFoundError:
             _createNewFileNameAndDataFrame()
             _updateConfig("fileName", GlobalVar.fileName)
@@ -304,7 +331,8 @@ def _selfCheck():
     else:
         _createNewFileNameAndDataFrame()
         _updateConfig("fileName", GlobalVar.fileName)
-        _saveXlsx()                         
+        _saveXlsx()
+        
 
                       
     
