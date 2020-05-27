@@ -861,14 +861,14 @@ class GlobalVar():
                 defaultString = "0"
             while(True):
                 try:
-                    tempInput = input(f"Type operation(ex. +2.25) {showMessage}: {defaultString} ")
+                    tempInput = input(f"Type operation(ex. +2.25) {showMessage} {defaultString} ")
                     if tempInput == "":
                         tempInput = "+0"
                     calculateResult = _calculator(tempInput)
                     valueString = str(float(defaultString) + calculateResult)
                     _timeRecorder(calculateResult)
                     break                                                                              
-                except (AttributeError, SyntaxError):
+                except (AttributeError, SyntaxError, ValueError):
                     valueString = ""
                     print("Please input operator + or - with number ex. +2.5")                
         elif targetColumn == "PROG_CNT":
