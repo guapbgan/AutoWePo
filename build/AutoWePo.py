@@ -300,7 +300,8 @@ def _selfCheck():
             _reorder()
             #if False:
             if newWeek:
-                print(tabulate(GlobalVar.reportDf, headers='keys', tablefmt="grid"))
+                _showBrief()
+                #print(tabulate(GlobalVar.reportDf, headers='keys', tablefmt="grid"))
                 pattern = re.compile(r"(?:(?P<index>\d+)\s*,?)")
                 originalReport = GlobalVar.reportDf.copy()
                 originalReport.loc[:, ["W_HOUR"]] = 0
@@ -311,15 +312,16 @@ def _selfCheck():
                         matcherList = pattern.findall(indexString)                            
                         indexList = list()
                         for group in matcherList:
-                            indexList.append(group)
+                            indexList.append(int(group))
                         GlobalVar.reportDf = originalReport.loc[indexList, :]
                         _reorder()
-                        print(tabulate(GlobalVar.reportDf, headers='keys', tablefmt="grid"))
+                        _showBrief()
+                        #print(tabulate(GlobalVar.reportDf, headers='keys', tablefmt="grid"))
                         if input("Confrim? Input any character to select again :") == '':
-                            break
                             _createNewFileNameAndDataFrame(newDataFrame = False)
                             _updateConfig("fileName", GlobalVar.fileName)
                             _saveXlsx()
+                            break
                     else:  
                         break
 
