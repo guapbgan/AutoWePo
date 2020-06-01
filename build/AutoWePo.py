@@ -473,7 +473,7 @@ def addNewRow(assignColumnDict = [], defaultColumnDict = dict()):
     global GlobalVar
     newDataDict = dict()
     if len(GlobalVar.reportDf["identity"]) != 0:
-        newRowIdentity = int(GlobalVar.reportDf["identity"].max()) + 1
+        newRowIdentity = int(pd.to_numeric(GlobalVar.reportDf["identity"]).max()) + 1
     else:
         newRowIdentity = 0
     
